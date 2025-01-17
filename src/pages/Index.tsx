@@ -54,12 +54,27 @@ const Index = () => {
       formData.append('image', selectedFile);
       formData.append('settings', JSON.stringify(settings));
 
-      // Simulate processing delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // In a real implementation, this would be an API call to your backend
+      // For now, we'll create a simple STL file structure
+      const stlHeader = 'solid generated\n';
+      const stlFooter = 'endsolid generated\n';
       
-      // Simulate generated file URL (in production, this would come from your backend)
-      const mockModelUrl = URL.createObjectURL(new Blob(['mock stl data'], { type: 'model/stl' }));
-      setGeneratedModelUrl(mockModelUrl);
+      // Create a simple cube as a placeholder
+      // In production, this would be replaced with actual geometry from your Python backend
+      const vertices = [
+        [0, 0, 0], [1, 0, 0], [1, 1, 0],
+        [0, 0, 0], [1, 1, 0], [0, 1, 0]
+      ];
+      
+      let stlContent = stlHeader;
+      vertices.forEach(([x, y, z]) => {
+        stlContent += `vertex ${x} ${y} ${z}\n`;
+      });
+      stlContent += stlFooter;
+
+      const blob = new Blob([stlContent], { type: 'model/stl' });
+      const modelUrl = URL.createObjectURL(blob);
+      setGeneratedModelUrl(modelUrl);
 
       toast({
         title: "Processing complete",
