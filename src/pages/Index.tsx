@@ -54,23 +54,65 @@ const Index = () => {
       formData.append('image', selectedFile);
       formData.append('settings', JSON.stringify(settings));
 
-      // In a real implementation, this would be an API call to your backend
-      // For now, we'll create a simple STL file structure
-      const stlHeader = 'solid generated\n';
-      const stlFooter = 'endsolid generated\n';
-      
-      // Create a simple cube as a placeholder
-      // In production, this would be replaced with actual geometry from your Python backend
+      // Create a proper cube with 12 triangles (2 triangles per face, 6 faces)
       const vertices = [
+        // Front face
+        [0, 0, 0], [1, 1, 0], [0, 1, 0],
         [0, 0, 0], [1, 0, 0], [1, 1, 0],
-        [0, 0, 0], [1, 1, 0], [0, 1, 0]
+        // Back face
+        [0, 0, 1], [0, 1, 1], [1, 1, 1],
+        [0, 0, 1], [1, 1, 1], [1, 0, 1],
+        // Top face
+        [0, 1, 0], [1, 1, 1], [0, 1, 1],
+        [0, 1, 0], [1, 1, 0], [1, 1, 1],
+        // Bottom face
+        [0, 0, 0], [0, 0, 1], [1, 0, 1],
+        [0, 0, 0], [1, 0, 1], [1, 0, 0],
+        // Right face
+        [1, 0, 0], [1, 0, 1], [1, 1, 1],
+        [1, 0, 0], [1, 1, 1], [1, 1, 0],
+        // Left face
+        [0, 0, 0], [0, 1, 0], [0, 1, 1],
+        [0, 0, 0], [0, 1, 1], [0, 0, 1],
       ];
+
+      let stlContent = 'solid generated\n';
       
-      let stlContent = stlHeader;
-      vertices.forEach(([x, y, z]) => {
-        stlContent += `vertex ${x} ${y} ${z}\n`;
-      });
-      stlContent += stlFooter;
+      // Group vertices into triangles and generate facets
+      for (let i = 0; i < vertices.length; i += 3) {
+        const v1 = vertices[i];
+        const v2 = vertices[i + 1];
+        const v3 = vertices[i + 2];
+        
+        // Calculate normal vector for the triangle
+        const dx1 = v2[0] - v1[0];
+        const dy1 = v2[1] - v1[1];
+        const dz1 = v2[2] - v1[2];
+        const dx2 = v3[0] - v1[0];
+        const dy2 = v3[1] - v1[1];
+        const dz2 = v3[2] - v1[2];
+        
+        // Cross product for normal vector
+        const nx = dy1 * dz2 - dz1 * dy2;
+        const ny = dz1 * dx2 - dx1 * dz2;
+        const nz = dx1 * dy2 - dy1 * dx2;
+        
+        // Normalize the normal vector
+        const length = Math.sqrt(nx * nx + ny * ny + nz * nz);
+        const normalX = nx / length;
+        const normalY = ny / length;
+        const normalZ = nz / length;
+
+        stlContent += `  facet normal ${normalX} ${normalY} ${normalZ}\n`;
+        stlContent += '    outer loop\n';
+        stlContent += `      vertex ${v1[0]} ${v1[1]} ${v1[2]}\n`;
+        stlContent += `      vertex ${v2[0]} ${v2[1]} ${v2[2]}\n`;
+        stlContent += `      vertex ${v3[0]} ${v3[1]} ${v3[2]}\n`;
+        stlContent += '    endloop\n';
+        stlContent += '  endfacet\n';
+      }
+
+      stlContent += 'endsolid generated\n';
 
       const blob = new Blob([stlContent], { type: 'model/stl' });
       const modelUrl = URL.createObjectURL(blob);
