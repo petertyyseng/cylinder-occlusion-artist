@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Image as ImageIcon, Settings, Download } from 'lucide-react';
+import ImageUploader from '@/components/ImageUploader';
+import SettingsForm from '@/components/SettingsForm';
+import ActionButtons from '@/components/ActionButtons';
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -54,12 +54,6 @@ const Index = () => {
       formData.append('image', selectedFile);
       formData.append('settings', JSON.stringify(settings));
 
-      // In a real implementation, this would call your Python backend
-      // const response = await fetch('/api/process-image', {
-      //   method: 'POST',
-      //   body: formData
-      // });
-      
       // Simulate processing delay
       await new Promise(resolve => setTimeout(resolve, 2000));
       
@@ -114,137 +108,26 @@ const Index = () => {
 
         <Card className="p-6 bg-white shadow-lg">
           <div className="space-y-6">
-            <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 transition-colors hover:border-gray-400">
-              {imagePreview ? (
-                <div className="relative w-full max-w-md">
-                  <img 
-                    src={imagePreview} 
-                    alt="Preview" 
-                    className="w-full h-auto rounded-lg shadow-md"
-                  />
-                  <Button
-                    variant="outline"
-                    className="absolute top-2 right-2"
-                    onClick={() => {
-                      setSelectedFile(null);
-                      setImagePreview(null);
-                    }}
-                  >
-                    Change
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                  <div className="mt-4 flex text-sm leading-6 text-gray-600">
-                    <label className="relative cursor-pointer rounded-md bg-white font-semibold text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2 hover:text-blue-500">
-                      <span>Upload an image</span>
-                      <Input
-                        type="file"
-                        className="sr-only"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                      />
-                    </label>
-                  </div>
-                  <p className="text-xs text-gray-500">PNG, JPG up to 10MB</p>
-                </div>
-              )}
-            </div>
+            <ImageUploader
+              imagePreview={imagePreview}
+              onFileChange={handleFileChange}
+              onImageReset={() => {
+                setSelectedFile(null);
+                setImagePreview(null);
+              }}
+            />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Maximum Height (mm)
-                </label>
-                <Input
-                  type="number"
-                  value={settings.maxHeight}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    maxHeight: parseFloat(e.target.value)
-                  })}
-                  min="1"
-                  max="100"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Cylinder Radius (mm)
-                </label>
-                <Input
-                  type="number"
-                  value={settings.cylinderRadius}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    cylinderRadius: parseFloat(e.target.value)
-                  })}
-                  min="0.1"
-                  max="10"
-                  step="0.1"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Spacing (mm)
-                </label>
-                <Input
-                  type="number"
-                  value={settings.spacing}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    spacing: parseFloat(e.target.value)
-                  })}
-                  min="0.1"
-                  max="10"
-                  step="0.1"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Resolution (px)
-                </label>
-                <Input
-                  type="number"
-                  value={settings.resolution}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    resolution: parseInt(e.target.value)
-                  })}
-                  min="50"
-                  max="500"
-                  step="10"
-                />
-              </div>
-            </div>
+            <SettingsForm
+              settings={settings}
+              onSettingsChange={setSettings}
+            />
 
-            <div className="flex justify-center gap-4">
-              <Button
-                className="w-full md:w-auto"
-                onClick={handleProcess}
-                disabled={!selectedFile || isProcessing}
-              >
-                {isProcessing ? (
-                  <>Processing...</>
-                ) : (
-                  <>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Generate 3D Model
-                  </>
-                )}
-              </Button>
-
-              {generatedModelUrl && (
-                <Button
-                  className="w-full md:w-auto"
-                  onClick={handleDownload}
-                  variant="secondary"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download STL
-                </Button>
-              )}
-            </div>
+            <ActionButtons
+              isProcessing={isProcessing}
+              generatedModelUrl={generatedModelUrl}
+              onProcess={handleProcess}
+              onDownload={handleDownload}
+            />
           </div>
         </Card>
 
