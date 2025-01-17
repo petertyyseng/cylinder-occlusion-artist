@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Image as ImageIcon, Settings } from 'lucide-react';
+import { Upload, Image as ImageIcon, Settings, Download } from 'lucide-react';
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [generatedModelUrl, setGeneratedModelUrl] = useState<string | null>(null);
   const [settings, setSettings] = useState({
     maxHeight: 20,
     cylinderRadius: 1,
@@ -58,17 +59,21 @@ const Index = () => {
       //   method: 'POST',
       //   body: formData
       // });
-
+      
       // Simulate processing delay
       await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Simulate generated file URL (in production, this would come from your backend)
+      const mockModelUrl = URL.createObjectURL(new Blob(['mock stl data'], { type: 'model/stl' }));
+      setGeneratedModelUrl(mockModelUrl);
 
       toast({
         title: "Processing complete",
         description: "Your STL file has been generated successfully!",
       });
 
-      // In a real implementation, you would handle the STL file download here
     } catch (error) {
+      console.error('Processing error:', error);
       toast({
         title: "Processing failed",
         description: "An error occurred while processing your image",
@@ -76,6 +81,22 @@ const Index = () => {
       });
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleDownload = () => {
+    if (generatedModelUrl) {
+      const link = document.createElement('a');
+      link.href = generatedModelUrl;
+      link.download = 'generated-model.stl';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Download started",
+        description: "Your 3D model is being downloaded",
+      });
     }
   };
 
@@ -197,7 +218,7 @@ const Index = () => {
               </div>
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-4">
               <Button
                 className="w-full md:w-auto"
                 onClick={handleProcess}
@@ -212,6 +233,17 @@ const Index = () => {
                   </>
                 )}
               </Button>
+
+              {generatedModelUrl && (
+                <Button
+                  className="w-full md:w-auto"
+                  onClick={handleDownload}
+                  variant="secondary"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download STL
+                </Button>
+              )}
             </div>
           </div>
         </Card>
