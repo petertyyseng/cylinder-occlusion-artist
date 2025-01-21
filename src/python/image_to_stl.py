@@ -27,8 +27,8 @@ def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spa
         for x in range(resolution):
             depth = pixels[y, x]
             if depth > 0:  # Only create holes where there's some depth
-                # Create cylinder for the hole
-                hole = sd.cylinder(r=cylinder_radius, h=depth + 1)  # +1 to ensure it goes through
+                # Create cylinder for the hole with high segment count for roundness
+                hole = sd.cylinder(r=cylinder_radius, h=depth + 1, segments=32)  # Added segments parameter
                 # Translate to position
                 translated = sd.translate([
                     x * (2 * cylinder_radius + spacing) + cylinder_radius,
@@ -54,7 +54,7 @@ def create_cylinder_primitives(output_path, base_height=1, cylinder_radius=1):
     for i in range(256):
         depth = base_height + (i / 255.0) * base_height
         base = sd.cube([block_size, block_size, base_height])
-        hole = sd.cylinder(r=cylinder_radius, h=depth)
+        hole = sd.cylinder(r=cylinder_radius, h=depth, segments=32)  # Added segments parameter
         hole = sd.translate([block_size/2, block_size/2, base_height - depth])(hole)
         result = sd.difference()(base, hole)
         scad_render_to_file(result, os.path.join(output_path, f'cylinder_{i}.scad'))
