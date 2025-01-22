@@ -6,6 +6,7 @@ interface Settings {
   cylinderRadius: number;
   spacing: number;
   resolution: number;
+  baseThickness: number;
 }
 
 interface SettingsFormProps {
@@ -74,9 +75,25 @@ const SettingsForm = ({ settings, onSettingsChange }: SettingsFormProps) => {
             ...settings,
             resolution: parseInt(e.target.value)
           })}
-          min="50"
-          max="500"
+          min="20"
+          max="200"
           step="10"
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700">
+          Base Thickness (mm)
+        </label>
+        <Input
+          type="number"
+          value={settings.baseThickness}
+          onChange={(e) => onSettingsChange({
+            ...settings,
+            baseThickness: parseFloat(e.target.value)
+          })}
+          min="0.5"
+          max="5"
+          step="0.5"
         />
       </div>
     </div>

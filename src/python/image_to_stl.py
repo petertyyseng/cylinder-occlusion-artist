@@ -4,7 +4,7 @@ import solid as sd
 import os
 from solid import scad_render_to_file
 
-def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spacing=0.5, resolution=100):
+def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spacing=0.5, resolution=50, base_thickness=1):
     # Load and process image
     img = Image.open(image_path).convert('L')
     img = img.resize((resolution, resolution), Image.Resampling.LANCZOS)
@@ -16,7 +16,7 @@ def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spa
     # Calculate the size of the base block
     block_width = resolution * (2 * cylinder_radius + spacing)
     block_depth = resolution * (2 * cylinder_radius + spacing)
-    block_height = max_height + 1  # Add 1mm for the base
+    block_height = max_height + base_thickness  # Use base_thickness instead of hardcoded value
     
     # Create base block
     base_block = sd.cube([block_width, block_depth, block_height])
@@ -27,8 +27,8 @@ def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spa
         for x in range(resolution):
             depth = pixels[y, x]
             if depth > 0:  # Only create holes where there's some depth
-                # Create cylinder for the hole with high segment count for roundness
-                hole = sd.cylinder(r=cylinder_radius, h=depth + 1, segments=32)  # Added segments parameter
+                # Create cylinder for the hole with optimized segment count
+                hole = sd.cylinder(r=cylinder_radius, h=depth + 1, segments=16)  # Reduced from 32 to 16 segments
                 # Translate to position
                 translated = sd.translate([
                     x * (2 * cylinder_radius + spacing) + cylinder_radius,
@@ -54,7 +54,7 @@ def create_cylinder_primitives(output_path, base_height=1, cylinder_radius=1):
     for i in range(256):
         depth = base_height + (i / 255.0) * base_height
         base = sd.cube([block_size, block_size, base_height])
-        hole = sd.cylinder(r=cylinder_radius, h=depth, segments=32)  # Added segments parameter
+        hole = sd.cylinder(r=cylinder_radius, h=depth, segments=16)  # Reduced from 32 to 16 segments
         hole = sd.translate([block_size/2, block_size/2, base_height - depth])(hole)
         result = sd.difference()(base, hole)
         scad_render_to_file(result, os.path.join(output_path, f'cylinder_{i}.scad'))
@@ -67,5 +67,6 @@ if __name__ == "__main__":
         max_height=20,
         cylinder_radius=1,
         spacing=0.5,
-        resolution=100
+        resolution=50,
+        base_thickness=1
     )

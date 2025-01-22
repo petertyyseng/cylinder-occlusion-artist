@@ -10,6 +10,7 @@ interface Settings {
   cylinderRadius: number;
   spacing: number;
   resolution: number;
+  baseThickness: number;
 }
 
 const ImageProcessor = () => {
@@ -22,7 +23,8 @@ const ImageProcessor = () => {
     maxHeight: 20,
     cylinderRadius: 1,
     spacing: 0.5,
-    resolution: 100
+    resolution: 50, // Reduced from 100 to 50 for smaller file size
+    baseThickness: 1 // New parameter for base thickness
   });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
