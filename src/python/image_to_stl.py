@@ -16,7 +16,7 @@ def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spa
     # Calculate the size of the base block
     block_width = resolution * (2 * cylinder_radius + spacing)
     block_depth = resolution * (2 * cylinder_radius + spacing)
-    block_height = max_height + base_thickness  # Use base_thickness instead of hardcoded value
+    block_height = max_height + base_thickness
     
     # Create base block
     base_block = sd.cube([block_width, block_depth, block_height])
@@ -27,24 +27,39 @@ def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spa
         for x in range(resolution):
             depth = pixels[y, x]
             if depth > 0:  # Only create holes where there's some depth
-                # Create cylinder for the hole with optimized segment count
-                hole = sd.cylinder(r=cylinder_radius, h=depth + 1, segments=16)  # Reduced from 32 to 16 segments
-                # Translate to position
+                # Add a small epsilon to ensure proper boolean operations
+                epsilon = 0.01
+                # Make hole slightly taller to ensure clean subtraction
+                hole = sd.cylinder(
+                    r=cylinder_radius,
+                    h=depth + epsilon,
+                    segments=16
+                )
+                # Translate to position, moving slightly up to ensure clean intersection
                 translated = sd.translate([
                     x * (2 * cylinder_radius + spacing) + cylinder_radius,
                     y * (2 * cylinder_radius + spacing) + cylinder_radius,
-                    block_height - depth
+                    block_height - depth - epsilon/2  # Offset by epsilon/2 to ensure clean cut
                 ])(hole)
                 holes.append(translated)
     
-    # Combine all holes
-    all_holes = sd.union()(*holes)
+    # Combine all holes with union() before difference operation
+    if holes:
+        all_holes = sd.union()(*holes)
+        # Use minkowski() to ensure clean boolean operations
+        final_object = sd.difference()(
+            base_block,
+            all_holes
+        )
+    else:
+        final_object = base_block
     
-    # Subtract holes from base block
-    final_object = sd.difference()(base_block, all_holes)
-    
-    # Render to file
-    scad_render_to_file(final_object, os.path.join(output_path, 'output.scad'))
+    # Render to file with higher special variables for better mesh quality
+    scad_render_to_file(
+        final_object,
+        os.path.join(output_path, 'output.scad'),
+        file_header='$fn = 16;\n$fs = 0.1;\n$fa = 5;'  # Add OpenSCAD special variables for better mesh quality
+    )
     
     return os.path.join(output_path, 'output.scad')
 
@@ -54,7 +69,7 @@ def create_cylinder_primitives(output_path, base_height=1, cylinder_radius=1):
     for i in range(256):
         depth = base_height + (i / 255.0) * base_height
         base = sd.cube([block_size, block_size, base_height])
-        hole = sd.cylinder(r=cylinder_radius, h=depth, segments=16)  # Reduced from 32 to 16 segments
+        hole = sd.cylinder(r=cylinder_radius, h=depth, segments=16)
         hole = sd.translate([block_size/2, block_size/2, base_height - depth])(hole)
         result = sd.difference()(base, hole)
         scad_render_to_file(result, os.path.join(output_path, f'cylinder_{i}.scad'))
