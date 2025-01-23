@@ -3,6 +3,22 @@ from PIL import Image
 import solid as sd
 import os
 from solid import scad_render_to_file
+import math
+
+def create_hexagon(radius):
+    """Create a hexagonal prism"""
+    # Calculate the points for a regular hexagon
+    points = []
+    for i in range(6):
+        angle = i * math.pi / 3  # 60 degrees in radians
+        x = radius * math.cos(angle)
+        y = radius * math.sin(angle)
+        points.append([x, y])
+    
+    # Create a linear extrusion of the 2D polygon
+    return sd.linear_extrude(height=1)(
+        sd.polygon(points=points)
+    )
 
 def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spacing=0.5, resolution=50, base_thickness=1):
     # Load and process image
@@ -14,8 +30,12 @@ def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spa
     pixels = (pixels / 255.0) * max_height
     
     # Calculate the size of the base block
-    block_width = resolution * (2 * cylinder_radius + spacing)
-    block_depth = resolution * (2 * cylinder_radius + spacing)
+    # For hexagons, we need to adjust the spacing slightly
+    hex_width = 2 * cylinder_radius
+    hex_height = 2 * cylinder_radius * math.sqrt(3) / 2
+    
+    block_width = resolution * (hex_width + spacing)
+    block_depth = resolution * (hex_height + spacing)
     block_height = max_height + base_thickness
     
     # Create base block
@@ -29,24 +49,29 @@ def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spa
             if depth > 0:  # Only create holes where there's some depth
                 # Add a small epsilon to ensure proper boolean operations
                 epsilon = 0.01
-                # Make hole slightly taller to ensure clean subtraction
-                hole = sd.cylinder(
-                    r=cylinder_radius,
-                    h=depth + epsilon,
-                    segments=16
-                )
-                # Translate to position, moving slightly up to ensure clean intersection
+                # Create hexagonal hole
+                hole = create_hexagon(cylinder_radius)
+                # Scale the hole to the desired height
+                hole = sd.scale([1, 1, depth + epsilon])(hole)
+                
+                # Offset every other row to create a honeycomb pattern
+                x_offset = (hex_width + spacing) * x
+                if y % 2 == 1:
+                    x_offset += (hex_width + spacing) / 2
+                    
+                y_offset = y * (hex_height + spacing)
+                
+                # Translate to position
                 translated = sd.translate([
-                    x * (2 * cylinder_radius + spacing) + cylinder_radius,
-                    y * (2 * cylinder_radius + spacing) + cylinder_radius,
-                    block_height - depth - epsilon/2  # Offset by epsilon/2 to ensure clean cut
+                    x_offset + cylinder_radius,
+                    y_offset + cylinder_radius,
+                    block_height - depth - epsilon/2
                 ])(hole)
                 holes.append(translated)
     
     # Combine all holes with union() before difference operation
     if holes:
         all_holes = sd.union()(*holes)
-        # Use minkowski() to ensure clean boolean operations
         final_object = sd.difference()(
             base_block,
             all_holes
@@ -58,7 +83,7 @@ def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spa
     scad_render_to_file(
         final_object,
         os.path.join(output_path, 'output.scad'),
-        file_header='$fn = 16;\n$fs = 0.1;\n$fa = 5;'  # Add OpenSCAD special variables for better mesh quality
+        file_header='$fn = 6;\n$fs = 0.1;\n$fa = 5;'  # Reduced $fn to 6 for hexagons
     )
     
     return os.path.join(output_path, 'output.scad')
@@ -69,7 +94,8 @@ def create_cylinder_primitives(output_path, base_height=1, cylinder_radius=1):
     for i in range(256):
         depth = base_height + (i / 255.0) * base_height
         base = sd.cube([block_size, block_size, base_height])
-        hole = sd.cylinder(r=cylinder_radius, h=depth, segments=16)
+        hole = create_hexagon(cylinder_radius)
+        hole = sd.scale([1, 1, depth])(hole)
         hole = sd.translate([block_size/2, block_size/2, base_height - depth])(hole)
         result = sd.difference()(base, hole)
         scad_render_to_file(result, os.path.join(output_path, f'cylinder_{i}.scad'))
