@@ -24,18 +24,13 @@ def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spa
     # Load and process image
     original_img = Image.open(image_path)
     
-    # Calculate target dimensions while maintaining aspect ratio
-    aspect_ratio = original_img.width / original_img.height
+    # Get the actual dimensions of the image in pixels
+    img_width = original_img.width
+    img_height = original_img.height
     
-    # Set a default maximum size (e.g., 100mm for the longer dimension)
-    max_size = 100
-    
-    if aspect_ratio >= 1:  # Width is larger
-        target_width = max_size
-        target_length = max_size / aspect_ratio
-    else:  # Height is larger
-        target_width = max_size * aspect_ratio
-        target_length = max_size
+    # Use the actual image dimensions (in mm) as target dimensions
+    target_width = img_width
+    target_length = img_height
     
     # Convert to grayscale and resize
     img = original_img.convert('L')
