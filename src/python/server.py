@@ -25,7 +25,7 @@ def process_image_endpoint():
             output_path = os.path.join(temp_dir, 'output')
             os.makedirs(output_path, exist_ok=True)
             
-            # Process the image using the existing function with target dimensions
+            # Process the image using the existing function
             scad_file = process_image(
                 image_path,
                 output_path,
@@ -33,9 +33,7 @@ def process_image_endpoint():
                 cylinder_radius=settings['cylinderRadius'],
                 spacing=settings['spacing'],
                 resolution=settings['resolution'],
-                base_thickness=settings['baseThickness'],
-                target_width=100,  # Default target width in mm
-                target_length=100  # Default target length in mm
+                base_thickness=settings['baseThickness']
             )
             
             # For now, return the SCAD file content

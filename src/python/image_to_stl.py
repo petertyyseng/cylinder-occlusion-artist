@@ -20,9 +20,25 @@ def create_hexagon(radius):
         sd.polygon(points=points)
     )
 
-def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spacing=0.5, resolution=50, base_thickness=1, target_width=100, target_length=100):
+def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spacing=0.5, resolution=50, base_thickness=1):
     # Load and process image
-    img = Image.open(image_path).convert('L')
+    original_img = Image.open(image_path)
+    
+    # Calculate target dimensions while maintaining aspect ratio
+    aspect_ratio = original_img.width / original_img.height
+    
+    # Set a default maximum size (e.g., 100mm for the longer dimension)
+    max_size = 100
+    
+    if aspect_ratio >= 1:  # Width is larger
+        target_width = max_size
+        target_length = max_size / aspect_ratio
+    else:  # Height is larger
+        target_width = max_size * aspect_ratio
+        target_length = max_size
+    
+    # Convert to grayscale and resize
+    img = original_img.convert('L')
     img = img.resize((resolution, resolution), Image.Resampling.LANCZOS)
     pixels = np.array(img)
     
@@ -117,7 +133,5 @@ if __name__ == "__main__":
         cylinder_radius=1,
         spacing=0.5,
         resolution=50,
-        base_thickness=1,
-        target_width=100,  # Example target width in mm
-        target_length=100  # Example target length in mm
+        base_thickness=1
     )
