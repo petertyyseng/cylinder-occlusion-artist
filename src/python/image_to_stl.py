@@ -20,7 +20,7 @@ def create_hexagon(radius):
         sd.polygon(points=points)
     )
 
-def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spacing=0.5, resolution=50, base_thickness=1):
+def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spacing=0.5, resolution=50, base_thickness=1, target_width=100, target_length=100):
     # Load and process image
     img = Image.open(image_path).convert('L')
     img = img.resize((resolution, resolution), Image.Resampling.LANCZOS)
@@ -29,13 +29,21 @@ def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spa
     # Normalize pixel values to desired height range
     pixels = (pixels / 255.0) * max_height
     
-    # Calculate the size of the base block
-    # For hexagons, we need to adjust the spacing slightly
+    # Calculate the size of the base block based on target dimensions
     hex_width = 2 * cylinder_radius
     hex_height = 2 * cylinder_radius * math.sqrt(3) / 2
     
-    block_width = resolution * (hex_width + spacing)
-    block_depth = resolution * (hex_height + spacing)
+    # Calculate the natural size based on resolution and hexagon dimensions
+    natural_width = resolution * (hex_width + spacing)
+    natural_length = resolution * (hex_height + spacing)
+    
+    # Calculate scaling factors to achieve target dimensions
+    width_scale = target_width / natural_width
+    length_scale = target_length / natural_length
+    
+    # Apply scaling to the base block and hexagon dimensions
+    block_width = target_width
+    block_depth = target_length
     block_height = max_height + base_thickness
     
     # Create base block
@@ -51,20 +59,20 @@ def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spa
                 epsilon = 0.01
                 # Create hexagonal hole
                 hole = create_hexagon(cylinder_radius)
-                # Scale the hole to the desired height
-                hole = sd.scale([1, 1, depth + epsilon])(hole)
+                # Scale the hole to the desired height and width/length
+                hole = sd.scale([width_scale, length_scale, depth + epsilon])(hole)
                 
-                # Offset every other row to create a honeycomb pattern
-                x_offset = (hex_width + spacing) * x
+                # Calculate scaled positions
+                x_offset = (hex_width * width_scale + spacing) * x
                 if y % 2 == 1:
-                    x_offset += (hex_width + spacing) / 2
+                    x_offset += (hex_width * width_scale + spacing) / 2
                     
-                y_offset = y * (hex_height + spacing)
+                y_offset = y * (hex_height * length_scale + spacing)
                 
                 # Translate to position
                 translated = sd.translate([
-                    x_offset + cylinder_radius,
-                    y_offset + cylinder_radius,
+                    x_offset + (cylinder_radius * width_scale),
+                    y_offset + (cylinder_radius * length_scale),
                     block_height - depth - epsilon/2
                 ])(hole)
                 holes.append(translated)
@@ -109,5 +117,7 @@ if __name__ == "__main__":
         cylinder_radius=1,
         spacing=0.5,
         resolution=50,
-        base_thickness=1
+        base_thickness=1,
+        target_width=100,  # Example target width in mm
+        target_length=100  # Example target length in mm
     )
