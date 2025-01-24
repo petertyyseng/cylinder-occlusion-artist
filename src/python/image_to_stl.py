@@ -28,9 +28,9 @@ def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spa
     img_width = original_img.width
     img_height = original_img.height
     
-    # Use the actual image dimensions (in mm) as target dimensions
-    target_width = img_width
-    target_length = img_height
+    # Convert pixels to millimeters (10 pixels = 1mm)
+    target_width = img_width / 10
+    target_length = img_height / 10
     
     # Convert to grayscale and resize
     img = original_img.convert('L')
@@ -120,7 +120,6 @@ def create_cylinder_primitives(output_path, base_height=1, cylinder_radius=1):
         scad_render_to_file(result, os.path.join(output_path, f'cylinder_{i}.scad'))
 
 if __name__ == "__main__":
-    # Example usage
     process_image(
         'input.jpg',
         'output',
