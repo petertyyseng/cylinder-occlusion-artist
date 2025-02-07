@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import ImageUploader from './ImageUploader';
@@ -11,6 +12,7 @@ interface Settings {
   spacing: number;
   resolution: number;
   baseThickness: number;
+  backlightOptimized: boolean;
 }
 
 const ImageProcessor = () => {
@@ -19,12 +21,13 @@ const ImageProcessor = () => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [generatedModelUrl, setGeneratedModelUrl] = useState<string | null>(null);
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<Settings>({
     maxHeight: 20,
     cylinderRadius: 1,
     spacing: 0.5,
-    resolution: 50, // Reduced from 100 to 50 for smaller file size
-    baseThickness: 1 // New parameter for base thickness
+    resolution: 50,
+    baseThickness: 1,
+    backlightOptimized: false
   });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
