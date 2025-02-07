@@ -1,3 +1,4 @@
+
 from flask import Flask, request, Response
 from flask_cors import CORS
 import json
@@ -25,7 +26,7 @@ def process_image_endpoint():
             output_path = os.path.join(temp_dir, 'output')
             os.makedirs(output_path, exist_ok=True)
             
-            # Process the image using the existing function
+            # Process the image using the existing function with the new backlight parameter
             scad_file = process_image(
                 image_path,
                 output_path,
@@ -33,11 +34,11 @@ def process_image_endpoint():
                 cylinder_radius=settings['cylinderRadius'],
                 spacing=settings['spacing'],
                 resolution=settings['resolution'],
-                base_thickness=settings['baseThickness']
+                base_thickness=settings['baseThickness'],
+                backlight_optimized=settings.get('backlightOptimized', False)
             )
             
-            # For now, return the SCAD file content
-            # In production, you would convert this to STL using OpenSCAD CLI
+            # Return the SCAD file content
             with open(scad_file, 'r') as f:
                 scad_content = f.read()
             

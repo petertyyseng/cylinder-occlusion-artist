@@ -18,7 +18,7 @@ def create_hexagon(radius):
         sd.polygon(points=points)
     )
 
-def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spacing=0.5, resolution=50, base_thickness=1):
+def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spacing=0.5, resolution=50, base_thickness=1, backlight_optimized=False):
     # Load and process image
     original_img = Image.open(image_path)
     
@@ -34,6 +34,10 @@ def process_image(image_path, output_path, max_height=20, cylinder_radius=1, spa
     new_height = int(resolution * aspect_ratio)
     img = img.resize((resolution, new_height), Image.Resampling.LANCZOS)
     pixels = np.array(img)
+    
+    # Invert pixels if backlight optimization is enabled
+    if backlight_optimized:
+        pixels = 255 - pixels
     
     # Normalize pixel values to desired height range
     pixels = (pixels / 255.0) * max_height
@@ -115,5 +119,6 @@ if __name__ == "__main__":
         cylinder_radius=1,
         spacing=0.5,
         resolution=50,
-        base_thickness=1
+        base_thickness=1,
+        backlight_optimized=False
     )
